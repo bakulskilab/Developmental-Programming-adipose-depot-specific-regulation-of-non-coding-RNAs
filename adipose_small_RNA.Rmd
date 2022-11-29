@@ -1,0 +1,1646 @@
+---
+title: "Adipose_Small_RNA"
+author: "John Dou"
+date: "January 26, 2021"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(DESeq2)
+library(EnhancedVolcano)
+library(dplyr)
+library(tibble)
+library(Hmisc)
+library(DGCA)
+library(openxlsx)
+
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(cowplot)
+
+path <- "K:/My Drive/Misc/RNAseq/Sheep_RNAseq/Fat_Small_RNA"
+
+gp <- gpar(fontsize=12, fontface=2)
+
+```
+
+# Load data
+```{r load}
+load(file.path(path,"Data/cat_STAR_oarlnc_cat_counts_deseqobject.RDA"))
+cat_lnc <- d_dds
+load(file.path(path,"Data/cat_STAR_oarmir_cat_counts_deseqobject.RDA"))
+cat_mir <- d_dds
+# load(file.path(path,"Data/cat_STAR_oarncrna_cat_counts_deseqobject.RDA"))
+# cat_nc <- d_dds
+load(file.path(path,"Data/cat_STAR_oarsno_cat_counts_deseqobject.RDA"))
+cat_sno <- d_dds
+load(file.path(path,"Data/cat_STAR_oarsnrna_cat_counts_deseqobject.RDA"))
+cat_sn <- d_dds
+
+load(file.path(path,"Data/rat_STAR_oarlnc_rat_counts_deseqobject.RDA"))
+rat_lnc <- d_dds
+load(file.path(path,"Data/rat_STAR_oarmir_rat_counts_deseqobject.RDA"))
+rat_mir <- d_dds
+# load(file.path(path,"Data/rat_STAR_oarncrna_rat_counts_deseqobject.RDA"))
+# rat_nc <- d_dds
+load(file.path(path,"Data/rat_STAR_oarsno_rat_counts_deseqobject.RDA"))
+rat_sno <- d_dds
+load(file.path(path,"Data/rat_STAR_oarsnrna_rat_counts_deseqobject.RDA"))
+rat_sn <- d_dds
+
+load(file.path(path,"Data/sat_STAR_oarlnc_sat_counts_deseqobject.RDA"))
+sat_lnc <- d_dds
+load(file.path(path,"Data/sat_STAR_oarmir_sat_counts_deseqobject.RDA"))
+sat_mir <- d_dds
+# load(file.path(path,"Data/sat_STAR_oarncrna_sat_counts_deseqobject.RDA"))
+# sat_nc <- d_dds
+load(file.path(path,"Data/sat_STAR_oarsno_sat_counts_deseqobject.RDA"))
+sat_sno <- d_dds
+load(file.path(path,"Data/sat_STAR_oarsnrna_sat_counts_deseqobject.RDA"))
+sat_sn <- d_dds
+
+load(file.path(path,"Data/vat_STAR_oarlnc_vat_counts_deseqobject.RDA"))
+vat_lnc <- d_dds
+load(file.path(path,"Data/vat_STAR_oarmir_vat_counts_deseqobject.RDA"))
+vat_mir <- d_dds
+# load(file.path(path,"Data/vat_STAR_oarncrna_vat_counts_deseqobject.RDA"))
+# vat_nc <- d_dds
+load(file.path(path,"Data/vat_STAR_oarsno_vat_counts_deseqobject.RDA"))
+vat_sno <- d_dds
+load(file.path(path,"Data/vat_STAR_oarsnrna_vat_counts_deseqobject.RDA"))
+vat_sn <- d_dds
+
+load(file.path(path,"Data/sat_bpa_STAR_oarlnc_sat_bpa_counts_deseqobject.RDA"))
+sat_bpa_lnc <- d_dds
+load(file.path(path,"Data/sat_bpa_STAR_oarmir_sat_bpa_counts_deseqobject.RDA"))
+sat_bpa_mir <- d_dds
+# load(file.path(path,"Data/sat_bpa_STAR_oarncrna_sat_bpa_counts_deseqobject.RDA"))
+# sat_bpa_nc <- d_dds
+load(file.path(path,"Data/sat_bpa_STAR_oarsno_sat_bpa_counts_deseqobject.RDA"))
+sat_bpa_sno <- d_dds
+load(file.path(path,"Data/sat_bpa_STAR_oarsnrna_sat_bpa_counts_deseqobject.RDA"))
+sat_bpa_sn <- d_dds
+
+load(file.path(path,"Data/vat_bpa_STAR_oarlnc_vat_bpa_counts_deseqobject.RDA"))
+vat_bpa_lnc <- d_dds
+load(file.path(path,"Data/vat_bpa_STAR_oarmir_vat_bpa_counts_deseqobject.RDA"))
+vat_bpa_mir <- d_dds
+# load(file.path(path,"Data/vat_bpa_STAR_oarncrna_vat_bpa_counts_deseqobject.RDA"))
+# vat_bpa_nc <- d_dds
+load(file.path(path,"Data/vat_bpa_STAR_oarsno_vat_bpa_counts_deseqobject.RDA"))
+vat_bpa_sno <- d_dds
+load(file.path(path,"Data/vat_bpa_STAR_oarsnrna_vat_bpa_counts_deseqobject.RDA"))
+vat_bpa_sn <- d_dds
+
+cat <- list(lnc=cat_lnc, mir=cat_mir, sno=cat_sno, sn=cat_sn)
+rat <- list(lnc=rat_lnc, mir=rat_mir, sno=rat_sno, sn=rat_sn)
+sat <- list(lnc=sat_lnc, mir=sat_mir, sno=sat_sno, sn=sat_sn)
+vat <- list(lnc=vat_lnc, mir=vat_mir, sno=vat_sno, sn=vat_sn)
+
+lnc <- list(cat=cat_lnc, rat=rat_lnc, sat=sat_lnc, vat=vat_lnc)
+mir <- list(cat=cat_mir, rat=rat_mir, sat=sat_mir, vat=vat_mir)
+sno <- list(cat=cat_sno, rat=rat_sno, sat=sat_sno, vat=vat_sno)
+sn <- list(cat=cat_sn, rat=rat_sn, sat=sat_sn, vat=vat_sn)
+
+sat_bpa <- list(lnc=sat_bpa_lnc, mir=sat_bpa_mir, sno=sat_bpa_sno, sn=sat_bpa_sn)
+vat_bpa <- list(lnc=vat_bpa_lnc, mir=vat_bpa_mir, sno=vat_bpa_sno, sn=vat_bpa_sn)
+
+```
+
+
+# Make dataset combined
+
+```{r}
+collapse_RNA <- function(rnaset){
+  counts <- lapply(rnaset, FUN=function(x){
+    counts(x) %>% as.matrix
+  })
+  counts <- do.call("rbind", counts)
+  
+  pd <- colData(rnaset[[1]])[,c('id','tissue','sheep','treat','group')]
+  
+  DESeqDataSetFromMatrix(countData = counts,
+                                    colData = pd,
+                                    design = ~ treat)
+}
+
+collapse_RNA2 <- function(rnaset){
+  counts <- lapply(rnaset, FUN=function(x){
+    counts(x) %>% as.matrix
+  })
+  counts <- do.call("cbind", counts)
+  
+  pd <- do.call("rbind", lapply(rnaset, FUN=function(X){
+    colData(X)[,c('id','tissue','sheep','treat','group')]
+  }))
+  
+  DESeqDataSetFromMatrix(countData = counts,
+                                    colData = pd,
+                                    design = ~ treat)
+}
+
+catf <- collapse_RNA(cat)
+ratf <- collapse_RNA(rat)
+satf <- collapse_RNA(sat)
+vatf <- collapse_RNA(vat)
+full <- list(cat=catf, rat=ratf, sat=satf, vat=vatf)
+
+combi.pd <- do.call("rbind", lapply(full, colData))
+combi.mat <- do.call("cbind", lapply(full, counts))
+combi.t.ds <- DESeqDataSetFromMatrix(countData = combi.mat,
+                                    colData = combi.pd,
+                                    design = ~ group)
+#save(combi.t.ds, file=file.path(path,'Robj/combiT.RDA'))
+
+
+lncf <- collapse_RNA2(lnc)
+mirf <- collapse_RNA2(mir)
+snof <- collapse_RNA2(sno)
+snf <- collapse_RNA2(sn)
+
+
+satfb <- collapse_RNA(sat_bpa)
+vatfb <- collapse_RNA(vat_bpa)
+full <- list(sat=satfb, vat=vatfb)
+
+combi.pd <- do.call("rbind", lapply(full, colData))
+combi.mat <- do.call("cbind", lapply(full, counts))
+combi.bpa.ds <- DESeqDataSetFromMatrix(countData = combi.mat,
+                                    colData = combi.pd,
+                                    design = ~ group)
+# save(combi.bpa.ds, file=file.path(path,'Robj/combiBPA.RDA'))
+
+
+cross.vat <- DESeqDataSetFromMatrix(countData = do.call("cbind", lapply(list(bpa=vatfb, t=vatf), counts)),
+                                    colData = do.call("rbind", lapply(list(bpa=vatfb, t=vatf), colData)),
+                                    design = ~ group)
+colData(cross.vat)$cohort <- c(rep('bpa',8),rep('t',8))
+
+cross.sat <- DESeqDataSetFromMatrix(countData = do.call("cbind", lapply(list(bpa=satfb, t=satf), counts)),
+                                    colData = do.call("rbind", lapply(list(bpa=satfb, t=satf), colData)),
+                                    design = ~ group)
+colData(cross.sat)$cohort <- c(rep('bpa',8),rep('t',8))
+```
+
+
+# Table 1
+```{r table}
+colData(catf)
+
+colData(satfb)
+```
+
+
+
+# PC Plots Prenatal T {.tabset}
+
+```{r}
+pc_plot <- function(dds, lab="group"){
+  #nsub = ifelse(nrow(dds)>1500, 100, 20)
+  vsd <- varianceStabilizingTransformation(dds)
+  pcs <- plotPCA(vsd, lab, returnData=T) 
+  ggplot(pcs, aes(x=PC1, y=PC2, col=group)) +
+    geom_point(size=4) + theme_classic() + theme(legend.position = "none", 
+          axis.title = element_text(size=12),
+          axis.text = element_text(size=12)) +
+    xlab(NULL) + ylab(NULL)
+}
+
+pc_plot2 <- function(dds, lab="tissue", title){
+  #nsub = ifelse(nrow(dds)>1500, 100, 20)
+  vsd <- varianceStabilizingTransformation(dds)
+  pcs <- plotPCA(vsd, lab, returnData=T) 
+  ggplot(pcs, aes(x=PC1, y=PC2, col=tissue)) +
+    geom_point(size=4) + theme_classic() + 
+    theme(legend.position = "none", 
+          axis.title = element_text(size=12),
+          axis.text = element_text(size=12)) +
+    xlab("Principal Component 1") + ylab("Principal Component 2") + ggtitle(title)
+}
+
+#grab legend for plotting purposes
+vsd <- varianceStabilizingTransformation(cat$lnc)
+pc.legend <- plotPCA(vsd, "group") + scale_color_discrete(name="Treatment", labels=c('Control','Prenatal-T')) +
+  theme(legend.key = element_blank())
+pc.legend <- pc.legend %>% get_legend()
+
+rm(vsd)
+```
+
+## CAT
+```{r}
+pc.cat.t <- lapply(cat, pc_plot)
+```
+
+## RAT
+```{r}
+pc.rat.t <- lapply(rat, pc_plot)
+```
+
+## SAT
+```{r}
+pc.sat.t <- lapply(sat, pc_plot)
+```
+
+## VAT
+```{r}
+pc.vat.t <- lapply(vat, pc_plot)
+```
+
+# PC Plot All
+```{r}
+pc_plot(combi.t.ds, lab="tissue")
+pc_plot(combi.t.ds[,combi.t.ds$treat=='C']) + 
+  scale_color_discrete(name="Tissue", labels=c('ECAT','PRAT','SAT','VAT'))
+```
+
+# Supplemental Figure 2 Tissue Type PCA in Controls
+```{r}
+lnc_pc <- pc_plot2(lncf[,lncf$treat=='C'], title="lncRNA") + 
+  scale_color_discrete(name="tissue", labels=c('ECAT','PRAT','SAT','VAT')) +
+  theme(plot.title = element_text(size=22),
+        axis.title = element_text(size=18),
+        axis.text = element_text(size=18))
+
+mir_pc <- pc_plot2(mirf[,mirf$treat=='C'], title="microRNA") + 
+  scale_color_discrete(name="tissue", labels=c('ECAT','PRAT','SAT','VAT')) +
+  theme(plot.title = element_text(size=22),
+        axis.title = element_text(size=18),
+        axis.text = element_text(size=18))
+
+sno_pc <- pc_plot2(snof[,snof$treat=='C'], title="snoRNA") + 
+  scale_color_discrete(name="tissue", labels=c('ECAT','PRAT','SAT','VAT')) +
+  theme(plot.title = element_text(size=22),
+        axis.title = element_text(size=18),
+        axis.text = element_text(size=18))
+
+sn_pc <- pc_plot2(snf[,snf$treat=='C'], title="snRNA") + 
+  scale_color_discrete(name="tissue", labels=c('ECAT','PRAT','SAT','VAT')) +
+  theme(plot.title = element_text(size=22),
+        axis.title = element_text(size=18),
+        axis.text = element_text(size=18))
+
+#grab legend for plotting purposes
+vsd <- varianceStabilizingTransformation(combi.t.ds)
+tissue.legend <- plotPCA(vsd, "tissue") + scale_color_discrete(name="Tissue", labels=c('ECAT','PRAT','SAT','VAT')) +
+  theme(legend.key = element_blank(),
+        legend.title = element_text(size=16),
+        legend.text = element_text(size=16))
+tissue.legend <- tissue.legend %>% get_legend()
+rm(vsd)
+
+suppfig1 <- grid.arrange(lnc_pc, mir_pc, sno_pc, sn_pc,
+             arrangeGrob(tissue.legend),
+             nrow=3,
+             layout_matrix=rbind(c(1,1,2,2),
+                                 c(3,3,4,4),
+                                 c(6,5,5,6)),
+             heights=c(4,4,2)
+             )
+
+ggsave(suppfig1, filename=file.path(path,"Figures/SuppFig1_Tissue_BPA.svg"), width=8, height=10)
+
+
+```
+
+
+# PC Plots BPA {.tabset}
+
+```{r}
+pc_plot <- function(dds){
+  #nsub = ifelse(nrow(dds)>1500, 100, 20)
+  vsd <- varianceStabilizingTransformation(dds)
+  if("SC" %in% vsd$group){
+    vsd$group <- factor(vsd$group, levels=c('SC','SB'))
+  }else{
+    vsd$group <- factor(vsd$group, levels=c('VC','VB'))
+  }
+  
+  pcs <- plotPCA(vsd, "group", returnData=T) 
+  ggplot(pcs, aes(x=PC1, y=PC2, col=group)) +
+    geom_point(size=4) + theme_classic() + theme(legend.position = "none", 
+          axis.title = element_text(size=12),
+          axis.text = element_text(size=12)) +
+    xlab(NULL) + ylab(NULL)
+}
+
+#grab legend for plotting purposes
+vsd <- varianceStabilizingTransformation(sat_bpa$lnc)
+pc.legend <- plotPCA(vsd, "group") + scale_color_discrete(name="Treatment", labels=c('Control','BPA')) +
+  theme(legend.key = element_blank())
+pc.legend <- pc.legend %>% get_legend()
+
+rm(vsd)
+```
+
+## SAT
+```{r}
+pc.sat.bpa <- lapply(sat_bpa, pc_plot)
+```
+
+## VAT
+```{r}
+pc.vat.bpa <- lapply(vat_bpa, pc_plot)
+```
+
+
+# PC plot treatment
+```{r}
+suppfig3 <- grid.arrange(arrangeGrob(pc.legend),
+            arrangeGrob(textGrob("SAT",gp=gp, hjust=0), 
+                        textGrob("VAT",gp=gp, hjust=0),
+                        nrow=1),
+             arrangeGrob(pc.sat.bpa$lnc, pc.vat.bpa$lnc,
+                         left=textGrob("LNC",gp=gp, rot=90), nrow=1),
+             arrangeGrob(pc.sat.bpa$mir, pc.vat.bpa$mir,
+                         left=textGrob("MIR",gp=gp, rot=90), nrow=1),
+             arrangeGrob(pc.sat.bpa$sno, pc.vat.bpa$sno,
+                         left=textGrob("SNO",gp=gp, rot=90), nrow=1),
+             arrangeGrob(pc.sat.bpa$sn, pc.vat.bpa$sn,
+                         left=textGrob("SN",gp=gp, rot=90), nrow=1),
+             nrow=6,
+             left = textGrob("PC1",
+                             gp=gpar(fontsize=18, fontface=3), rot=90),
+             bottom = textGrob("PC2",
+                             gp=gpar(fontsize=18, fontface=3)),
+             heights=c(2,1,4,4,4,4)
+             )
+
+ggsave(suppfig3, filename=file.path(path,"Figures/SuppFig3_PC_BPA.svg"), width=4.5, height=10.5)
+
+```
+
+# Models Tissue
+```{r message=F, warning=F}
+mod_fit <- function(dds, tissue){
+  nc <- list(lnc='lnc', mir='mir', sno='sno', sn='sn')
+  lapply(nc, FUN=function(x){
+    dds$fat <- dds$tissue==tissue %>% factor
+    dds$sheep <- factor(dds$sheep)
+    design(dds) <- ~ fat + sheep 
+    dds <- dds[rownames(cat[[x]]),]
+    DESeq(dds)
+  })
+}
+
+
+
+controls <- combi.t.ds[,combi.t.ds$treat=='C']
+
+# mod_fit <- function(dds, tissue){
+#   dds$fat <- dds$tissue==tissue %>% factor
+#   dds$sheep <- factor(dds$sheep)
+#   design(dds) <- ~ fat + sheep
+#   DESeq(dds)
+# }
+
+ds.c <- mod_fit(controls, 'C')
+ds.r <- mod_fit(controls, 'R')
+ds.s <- mod_fit(controls, 'S')
+ds.v <- mod_fit(controls, 'V')
+
+
+controls.bpa <- combi.bpa.ds[,combi.bpa.ds$treat=='C']
+ds.bpa.v <- mod_fit(controls.bpa, 'V')
+
+
+res.t <- function(ds,tissue){
+  res <- results(ds, name="fatTRUE")
+  res <- lfcShrink(ds, coef="fatTRUE", res=res, type='apeglm')
+  
+  counts <- counts(ds, normalized=T)
+  
+  baseMean_T <- rowMeans(counts[,ds$fat])
+  baseMean_O <- rowMeans(counts[,!ds$fat])
+  res[,paste0('baseMean_',tissue)] <- baseMean_T[rownames(res)]
+  res$baseMean_O <- baseMean_O[rownames(res)]
+  
+  res <- res[!is.na(res$padj),]
+  res[order(res$padj),]
+}
+
+res.c <- lapply(ds.c, res.t, 'C')
+res.r <- lapply(ds.r, res.t, 'R')
+res.s <- lapply(ds.s, res.t, 'S')
+res.v <- lapply(ds.v, res.t, 'V')
+
+res.bpa.v <- lapply(ds.bpa.v, res.t, 'V')
+```
+
+
+# Models Treat
+```{r message=F, warning=F}
+ds.cat <- lapply(cat, DESeq)
+ds.rat <- lapply(rat, DESeq)
+ds.sat <- lapply(sat, DESeq)
+ds.vat <- lapply(vat, DESeq)
+
+ds.sat.bpa <- lapply(sat_bpa, DESeq)
+ds.vat.bpa <- lapply(vat_bpa, DESeq)
+
+res.tab <- function(ds){
+  res <- results(ds, name="treat_T_vs_C")
+  res <- lfcShrink(ds, coef="treat_T_vs_C", res=res, type='apeglm')
+  
+  counts <- counts(ds, normalized=T)
+  
+  baseMean_T <- rowMeans(counts[,ds$treat=='T'])
+  baseMean_C <- rowMeans(counts[,ds$treat=='C'])
+  res$baseMean_T <- baseMean_T[rownames(res)]
+  res$baseMean_C <- baseMean_C[rownames(res)]
+  
+  res
+}
+
+res.tab.bpa <- function(ds){
+  res <- results(ds, name="treat_C_vs_B")
+  res <- lfcShrink(ds, coef="treat_C_vs_B", res=res, type='apeglm')
+  
+  counts <- counts(ds, normalized=T)
+  
+  baseMean_T <- rowMeans(counts[,ds$treat=='B'])
+  baseMean_C <- rowMeans(counts[,ds$treat=='C'])
+  res$baseMean_T <- baseMean_T[rownames(res)]
+  res$baseMean_C <- baseMean_C[rownames(res)]
+  
+  res
+}
+
+res.cat <- lapply(ds.cat, res.tab)
+res.rat <- lapply(ds.rat, res.tab)
+res.sat <- lapply(ds.sat, res.tab)
+res.vat <- lapply(ds.vat, res.tab)
+
+res.sat.bpa <- lapply(ds.sat.bpa, res.tab.bpa)
+res.vat.bpa <- lapply(ds.vat.bpa, res.tab.bpa)
+```
+
+# Supplemental Figure 1 Cohort sat/vat 
+```{r, message=F}
+# satf <- DESeq(satf)
+# satfb <-  DESeq(satfb)
+# 
+# vatf <- DESeq(vatf)
+# vatfb <-  DESeq(vatfb)
+# 
+# #sat
+# sat1 <- counts(satf, normalized=T)
+# sat2 <- counts(satfb, normalized=T)
+# 
+# sat1 <- sat1[,satf$treat=='C']
+# sat2 <- sat2[,satfb$treat=='C']
+# identical(rownames(sat1), rownames(sat2))
+# 
+# sat1.m <- log(rowMeans(sat1)+0.5)
+# sat2.m <- log(rowMeans(sat2)+0.5)
+# 
+# 
+# #vat
+# vat1 <- counts(vatf, normalized=T)
+# vat2 <- counts(vatfb, normalized=T)
+# 
+# vat1 <- vat1[,vatf$treat=='C']
+# vat2 <- vat2[,vatfb$treat=='C']
+# identical(rownames(vat1), rownames(vat2))
+# 
+# vat1.m <- log(rowMeans(vat1)+0.5)
+# vat2.m <- log(rowMeans(vat2)+0.5)
+# 
+# 
+# cor(sat1.m, sat2.m, method='spearman')
+# smoothScatter(sat1.m, sat2.m, xlab="log(SAT Pre-T Cohort Expression)", ylab="log(SAT BPA Cohort Expression)")
+# abline(lm(sat2.m ~ sat1.m))
+# 
+# 
+# 
+# cor(vat1.m, vat2.m, method='spearman')
+# smoothScatter(vat1.m, vat2.m, xlab="log(VAT Pre-T Cohort Expression)", ylab="log(VAT BPA Cohort Expression)")
+# abline(lm(vat2.m ~ vat1.m))
+# 
+# 
+mod_fit_cohort <- function(dds){
+  nc <- list(lnc='lnc', mir='mir', sno='sno', sn='sn')
+  lapply(nc, FUN=function(x){
+    dds$cohort <- dds$cohort=='bpa' %>% factor
+    design(dds) <- ~ cohort
+    dds <- dds[rownames(cat[[x]]),]
+    DESeq(dds)
+  })
+}
+
+controls.cross.vat <- cross.vat[,cross.vat$treat=='C']
+controls.cross.sat <- cross.sat[,cross.sat$treat=='C']
+
+ds.cross.vat <- mod_fit_cohort(controls.cross.vat)
+ds.cross.sat <- mod_fit_cohort(controls.cross.sat)
+
+res.cohort <- function(ds){
+  res <- results(ds, name="cohortTRUE")
+  res <- lfcShrink(ds, coef="cohortTRUE", res=res, type='apeglm')
+  
+  counts <- counts(ds, normalized=T)
+  
+  res$baseMean_BPA_cohort <- rowMeans(counts[,ds$cohort])
+  res$baseMean_T_cohort <- rowMeans(counts[,!ds$cohort])
+
+  res <- res[!is.na(res$padj),]
+  res[order(res$padj), c(c(6,7,2,3,4,5))]
+}
+
+res.cross.vat <- lapply(ds.cross.vat, res.cohort)
+res.cross.sat <- lapply(ds.cross.sat, res.cohort)
+```
+
+
+```{r}
+volc <- function(res, l=F, selectLab = NULL){
+  ymax = max(2, max(-log(res$padj,10), na.rm=T)+0.5)
+  
+  if(l){
+    labels = rownames(res)
+  }else{
+    labels = NA
+  }
+  
+  EnhancedVolcano(res, 
+                title='',
+                subtitle='',
+                caption='',
+                subtitleLabSize=1,
+                captionLabSize=1,
+                lab=labels, 
+                labSize=4,
+                selectLab=selectLab,
+                x='log2FoldChange',
+                y='padj',
+                ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                #xlim = c(-4.5,6.0),
+                ylim = c(0,ymax),
+                pCutoff=0.05,
+                FCcutoff=0.5,
+                drawConnectors = TRUE,
+                colAlpha = 1,
+                col = c("grey30", "#E2AD09", "#79A2F1", "#FF00FF")) +
+    theme_classic() +
+    theme(legend.position = "none", 
+          axis.title = element_text(size=12),
+          axis.text = element_text(size=12),
+          plot.margin = unit(c(-1,0.5,0,0),'cm')) +
+    xlab(NULL) + ylab(NULL)
+}
+
+vol.cat.tissue <- lapply(res.c, volc)
+vol.rat.tissue <- lapply(res.r, volc)
+vol.sat.tissue <- lapply(res.s, volc)
+vol.vat.tissue <- lapply(res.v, volc)
+
+vol.vat.bpa.tissue <- lapply(res.bpa.v, volc)
+```
+
+# Volcano Tissue {.tabset}
+
+## CAT
+```{r}
+print(vol.cat.tissue)
+```
+
+## RAT
+```{r}
+print(vol.rat.tissue)
+```
+
+## SAT
+```{r}
+print(vol.sat.tissue)
+```
+
+## VAT
+```{r}
+print(vol.vat.tissue)
+```
+```{r}
+print(vol.vat.bpa.tissue)
+```
+
+## Cohort diff
+
+```{r}
+vol.vat.cohort <- lapply(res.cross.vat, volc)
+vol.sat.cohort <- lapply(res.cross.sat, volc)
+
+print(vol.vat.cohort)
+print(vol.sat.cohort)
+
+vol.satcode <- EnhancedVolcano(res.code.sat, 
+                title='',
+                subtitle='',
+                caption='',
+                subtitleLabSize=1,
+                captionLabSize=1,
+                lab="", 
+                labSize=4,
+                x='log2FoldChange',
+                y='padj',
+                ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                #xlim = c(-4.5,6.0),
+                #ylim = c(0,ymax),
+                pCutoff=0.05,
+                FCcutoff=0.5,
+                #drawConnectors = TRUE,
+                colAlpha = 1,
+                col = c("grey30", "#E2AD09", "#79A2F1", "#FF00FF")) +
+    theme_classic() +
+    theme(legend.position = "none", 
+          axis.title = element_text(size=12),
+          axis.text = element_text(size=12),
+          plot.margin = unit(c(-1,0.5,0,0),'cm')) +
+    xlab(NULL) + ylab(NULL)
+
+
+vol.vatcode <- EnhancedVolcano(res.code.vat, 
+                title='',
+                subtitle='',
+                caption='',
+                subtitleLabSize=1,
+                captionLabSize=1,
+                lab="", 
+                labSize=4,
+                x='log2FoldChange',
+                y='padj',
+                ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                #xlim = c(-4.5,6.0),
+                #ylim = c(0,ymax),
+                pCutoff=0.05,
+                FCcutoff=0.5,
+                #drawConnectors = TRUE,
+                colAlpha = 1,
+                col = c("grey30", "#E2AD09", "#79A2F1", "#FF00FF")) +
+    theme_classic() +
+    theme(legend.position = "none", 
+          axis.title = element_text(size=12),
+          axis.text = element_text(size=12),
+          plot.margin = unit(c(-1,0.5,0,0),'cm')) +
+    xlab(NULL) + ylab(NULL)
+
+print(vol.satcode)
+print(vol.satcode)
+```
+
+# Figure Construction: Volcano Plot Tissue Differences
+```{r}
+fig2 <- grid.arrange(arrangeGrob(textGrob("ECAT",gp=gp, hjust=0), 
+                                 textGrob("PRAT",gp=gp, hjust=0), 
+                                 textGrob("SAT",gp=gp, hjust=0), 
+                                 textGrob("VAT",gp=gp, hjust=0),
+                                 nrow=1),
+             arrangeGrob(vol.cat.tissue$lnc, vol.rat.tissue$lnc, vol.sat.tissue$lnc, vol.vat.tissue$lnc,
+                                 left=textGrob("LNC",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.cat.tissue$mir, vol.rat.tissue$mir, vol.sat.tissue$mir, vol.vat.tissue$mir,
+                         left=textGrob("MIR",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.cat.tissue$sno, vol.rat.tissue$sno, vol.sat.tissue$sno, vol.vat.tissue$sno,
+                         left=textGrob("SNO",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.cat.tissue$sn, vol.rat.tissue$sn, vol.sat.tissue$sn, vol.vat.tissue$sn,
+                         left=textGrob("SN",gp=gp, rot=90), nrow=1),
+             nrow=5,
+             left = textGrob(bquote(~-Log[10]~adjusted~italic(P)), 
+                             gp=gpar(fontsize=18, fontface=3), rot=90),
+             bottom = textGrob(bquote(~Log[2]~fold~change), 
+                             gp=gpar(fontsize=18, fontface=3)),
+             heights=c(1,4,4,4,4)
+             )
+
+ggsave(fig2, filename=file.path(path,"Figures/Fig2_volcano_tissue.svg"), width=9, height=10.5)
+
+
+fig2.bpa <- grid.arrange(arrangeGrob(textGrob("VAT vs SAT",gp=gp, hjust=0),
+                                 nrow=1),
+             arrangeGrob(vol.vat.bpa.tissue$lnc, left=textGrob("LNC",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.vat.bpa.tissue$mir, left=textGrob("MIR",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.vat.bpa.tissue$sno, left=textGrob("SNO",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.vat.bpa.tissue$sn,left=textGrob("SN",gp=gp, rot=90), nrow=1),
+             nrow=5,
+             left = textGrob(bquote(~-Log[10]~adjusted~italic(P)), 
+                             gp=gpar(fontsize=18, fontface=3), rot=90),
+             bottom = textGrob(bquote(~Log[2]~fold~change), 
+                             gp=gpar(fontsize=18, fontface=3)),
+             heights=c(1,4,4,4,4)
+             )
+
+ggsave(fig2.bpa, filename=file.path(path,"Figures/Fig2_volcano_tissue_bpa_cohort.svg"), width=3, height=10.5)
+```
+
+# Volcano Prenatal T {.tabset}
+
+## CAT
+```{r}
+vol.cat.t <- lapply(res.cat, volc)
+```
+
+## RAT
+```{r}
+vol.rat.t <- lapply(res.rat, volc)
+```
+
+## SAT
+```{r}
+vol.sat.t <- lapply(res.sat, volc)
+```
+
+## VAT
+```{r}
+vol.vat.t <- lapply(res.vat, volc)
+```
+
+
+# Volcano BPA {.tabset}
+
+## SAT
+```{r}
+vol.sat.bpa <- lapply(res.sat.bpa, volc)
+```
+
+## VAT
+```{r}
+vol.vat.bpa <- lapply(res.vat.bpa, volc)
+```
+
+
+# Figure 3 construction: prenatal T related differential expression
+```{r}
+preT.cat.mir <- volc(res.cat$mir)
+preT.rat.mir <- volc(res.rat$mir, l=T)
+preT.vat.mir <- volc(res.vat$mir, l=T)
+preT.vat.sno <- volc(res.vat$sno, l=T, selectLab=c('LOC114110211','LOC114114240'))
+
+
+mod.vat.sno <- res.vat$sno
+mod.vat.sno <- mod.vat.sno[order(mod.vat.sno$pvalue),]
+
+fig3 <- grid.arrange(arrangeGrob(textGrob("ECAT: MIR",gp=gp, hjust=0.5), 
+                                 textGrob("PRAT: MIR",gp=gp, hjust=0.5),
+                                 nrow=1),
+             arrangeGrob(preT.cat.mir, preT.rat.mir, nrow=1),
+             arrangeGrob(textGrob("VAT: MIR",gp=gp, hjust=0.5), 
+                                 textGrob("VAT: SNO",gp=gp, hjust=0.5),
+                                 nrow=1),
+             arrangeGrob(preT.vat.mir, preT.vat.sno, nrow=1),
+             nrow=4,
+             left = textGrob(bquote(~-Log[10]~adjusted~italic(P)),
+                             gp=gpar(fontsize=18, fontface=3), rot=90),
+             bottom = textGrob(bquote(~Log[2]~fold~change),
+                             gp=gpar(fontsize=18, fontface=3)),
+             heights=c(1,4,1,4)
+             )
+
+ggsave(fig3, filename=file.path(path,"Figures/Fig3_volcano_preT.svg"), width=8, height=6)
+
+```
+
+# Supp Figure construction: volcano plot all
+```{r}
+fig.vol.t <- grid.arrange(arrangeGrob(textGrob("ECAT",gp=gp, hjust=0), 
+                                 textGrob("PRAT",gp=gp, hjust=0), 
+                                 textGrob("SAT",gp=gp, hjust=0), 
+                                 textGrob("VAT",gp=gp, hjust=0),
+                                 nrow=1),
+             arrangeGrob(vol.cat.t$lnc, vol.rat.t$lnc, vol.sat.t$lnc, vol.vat.t$lnc,
+                                 left=textGrob("LNC",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.cat.t$mir, vol.rat.t$mir, vol.sat.t$mir, vol.vat.t$mir,
+                         left=textGrob("MIR",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.cat.t$sno, vol.rat.t$sno, vol.sat.t$sno, vol.vat.t$sno,
+                         left=textGrob("SNO",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.cat.t$sn, vol.rat.t$sn, vol.sat.t$sn, vol.vat.t$sn,
+                         left=textGrob("SN",gp=gp, rot=90), nrow=1),
+             nrow=5,
+             left = textGrob(bquote(~-Log[10]~adjusted~italic(P)), 
+                             gp=gpar(fontsize=18, fontface=3), rot=90),
+             bottom = textGrob(bquote(~Log[2]~fold~change), 
+                             gp=gpar(fontsize=18, fontface=3)),
+             heights=c(1,4,4,4,4)
+             )
+
+ggsave(fig.vol.t, filename=file.path(path,"Figures/Fig_volcano_full_preT.svg"), width=9, height=10.5)
+
+
+fig.vol.bpa <- grid.arrange(arrangeGrob(textGrob("SAT",gp=gp, hjust=0), 
+                                 textGrob("VAT",gp=gp, hjust=0),
+                                 nrow=1),
+             arrangeGrob(vol.sat.bpa$lnc, vol.vat.bpa$lnc,
+                                 left=textGrob("LNC",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.sat.bpa$mir, vol.vat.bpa$mir,
+                         left=textGrob("MIR",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.sat.bpa$sno, vol.vat.bpa$sno,
+                         left=textGrob("SNO",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.sat.bpa$sn, vol.vat.bpa$sn,
+                         left=textGrob("SN",gp=gp, rot=90), nrow=1),
+             nrow=5,
+             left = textGrob(bquote(~-Log[10]~adjusted~italic(P)), 
+                             gp=gpar(fontsize=18, fontface=3), rot=90),
+             bottom = textGrob(bquote(~Log[2]~fold~change), 
+                             gp=gpar(fontsize=18, fontface=3)),
+             heights=c(1,4,4,4,4)
+             )
+
+ggsave(fig.vol.bpa, filename=file.path(path,"Figures/Fig_volcano_full_bpa.svg"), width=4.7, height=10.5)
+
+```
+
+# Supp Figure Volcano Cohort Differences in Controls
+```{r}
+fig.vol.cohort <- grid.arrange(arrangeGrob(textGrob("SAT",gp=gp, hjust=0), 
+                                 textGrob("VAT",gp=gp, hjust=0),
+                                 nrow=1),
+             arrangeGrob(vol.sat.cohort$lnc, vol.vat.cohort$lnc,
+                                 left=textGrob("LNC",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.sat.cohort$mir, vol.vat.cohort$mir,
+                         left=textGrob("MIR",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.sat.cohort$sno, vol.vat.cohort$sno,
+                         left=textGrob("SNO",gp=gp, rot=90), nrow=1),
+             arrangeGrob(vol.sat.cohort$sn, vol.vat.cohort$sn,
+                         left=textGrob("SN",gp=gp, rot=90), nrow=1),
+             nrow=5,
+             left = textGrob(bquote(~-Log[10]~adjusted~italic(P)), 
+                             gp=gpar(fontsize=18, fontface=3), rot=90),
+             bottom = textGrob(bquote(~Log[2]~fold~change), 
+                             gp=gpar(fontsize=18, fontface=3)),
+             heights=c(1,4,4,4,4)
+             )
+
+ggsave(fig.vol.cohort, filename=file.path(path,"Figures/Fig_volcano_cohort_controls.svg"), width=4.7, height=10.5)
+
+
+fig.vol.cohort.code <- grid.arrange(arrangeGrob(textGrob("SAT",gp=gp, hjust=0), 
+                                 textGrob("VAT",gp=gp, hjust=0),
+                                 nrow=1),
+             arrangeGrob(vol.satcode, vol.vatcode, nrow=1),
+             left = textGrob(bquote(~-Log[10]~adjusted~italic(P)), 
+                             gp=gpar(fontsize=18, fontface=3), rot=90),
+             bottom = textGrob(bquote(~Log[2]~fold~change), 
+                             gp=gpar(fontsize=18, fontface=3)),
+             heights=c(1,4)
+             )
+
+ggsave(fig.vol.cohort.code, filename=file.path(path,"Figures/Fig_volcano_cohort_controls_coding.svg"), width=7, height=5)
+
+write.csv(res.code.sat, file=file.path(path,"Tables/SAT_cohort_controls_coding.csv"),row.names=T)
+write.csv(res.code.vat, file=file.path(path,"Tables/VAT_cohort_controls_coding.csv"),row.names=T)
+```
+
+# Figure 4 construction: BPA related differential expression
+```{r}
+bpa.vat.lnc <- volc(res.vat.bpa$lnc, l=T)
+bpa.vat.sn <- volc(res.vat.bpa$sn, l=T)
+
+fig4 <- grid.arrange(arrangeGrob(textGrob("VAT: LNC",gp=gp, hjust=0.5), 
+                                 textGrob("VAT: SN",gp=gp, hjust=0.5),
+                                 nrow=1),
+             arrangeGrob(bpa.vat.lnc, bpa.vat.sn, nrow=1),
+             nrow=2,
+             left = textGrob(bquote(~-Log[10]~adjusted~italic(P)),
+                             gp=gpar(fontsize=18, fontface=3), rot=90),
+             bottom = textGrob(bquote(~Log[2]~fold~change),
+                             gp=gpar(fontsize=18, fontface=3)),
+             heights=c(1,2)
+             )
+
+ggsave(fig4, filename=file.path(path,"Figures/Fig4_volcano_bpa.svg"), width=8, height=4)
+
+```
+
+# Results tables
+```{r}
+write_tab <- function(res, name){
+  res = lapply(res, FUN=function(x){
+    x = x[!is.na(x$padj),]
+    x = x[order(x$padj),]
+    x$Gene <- paste0(' ',rownames(x))
+    x[,c(8,7,6,2,3,4,5)]
+  })
+  
+  names(res) <- paste0(name,"_",names(res))
+  
+  res
+}
+
+# Tissue Type tables
+tab.t.cat <- write_tab(res.c, "CAT")
+tab.t.rat <- write_tab(res.r, "RAT")
+tab.t.sat <- write_tab(res.s, "SAT")
+tab.t.vat <- write_tab(res.v, "VAT")
+
+write.xlsx(c(tab.t.cat,tab.t.rat,tab.t.sat,tab.t.vat), 
+           file=file.path(path,"Tables/SuppTable2_Tissue_Type_Differences_in_Controls.xlsx"))
+
+tab.bpa.vat <- write_tab(res.bpa.v, "VAT")
+write.xlsx(tab.bpa.vat, 
+           file=file.path(path,"Tables/SuppTable_Tissue_Type_Differences_in_Controls_BPA_Cohort.xlsx"))
+
+# Cohort Table
+write_tabc <- function(res, name){
+  res = lapply(res, FUN=function(x){
+    x = x[!is.na(x$padj),]
+    x = x[order(x$padj),]
+    x$Gene <- paste0(' ',rownames(x))
+    x[,c(7,1,2,3,4,5,6)]
+  })
+  
+  names(res) <- paste0(name,"_",names(res))
+  
+  res
+}
+tab.cohort.vat <- write_tabc(res.cross.vat, "VAT")
+tab.cohort.sat <- write_tabc(res.cross.sat, "SAT")
+write.xlsx(c(tab.cohort.sat, tab.cohort.vat), 
+           file=file.path(path,"Tables/SuppTable_Cohort_Differences_in_Controls.xlsx"))
+
+
+#Prenatal T effect table
+tab.cat <- write_tab(res.cat,"CAT")
+tab.rat <- write_tab(res.rat,"RAT")
+tab.sat <- write_tab(res.sat,"SAT")
+tab.vat <- write_tab(res.vat,"VAT")
+
+write.xlsx(c(tab.cat,tab.rat,tab.sat,tab.vat), 
+           file=file.path(path,"Tables/SuppTable3_Prenatal_T_results.xlsx"))
+
+
+#BPA effect table
+tab.sat.bpa <- write_tab(res.sat.bpa,"SAT")
+tab.vat.bpa <- write_tab(res.vat.bpa,"VAT")
+
+write.xlsx(c(tab.sat.bpa, tab.vat.bpa), 
+           file=file.path(path,"Tables/SuppTable4_BPA_results.xlsx"))
+
+
+fig4 <- grid.arrange(arrangeGrob(textGrob("VAT: LNC",gp=gp, hjust=0.5), 
+                                 textGrob("VAT: SN",gp=gp, hjust=0.5),
+                                 nrow=1),
+             arrangeGrob(bpa.vat.lnc, bpa.vat.sn, nrow=1),
+             nrow=2,
+             left = textGrob(bquote(~-Log[10]~adjusted~italic(P)),
+                             gp=gpar(fontsize=18, fontface=3), rot=90),
+             bottom = textGrob(bquote(~Log[2]~fold~change),
+                             gp=gpar(fontsize=18, fontface=3)),
+             heights=c(1,2)
+             )
+
+ggsave(fig4, filename=file.path(path,"Figures/Fig4_volcano_bpa.svg"), width=8, height=4)
+
+```
+
+# Correlation of BPA and Prenatal T effects
+```{r}
+identical(rownames(res.sat$lnc), rownames(res.sat.bpa$lnc))
+identical(rownames(res.sat$mir), rownames(res.sat.bpa$mir))
+
+plot_bpa_t_corr <- function(ncRNA, tissue){
+  
+  if(tissue=='SAT'){
+    dat <- data.frame(preT = res.sat[[ncRNA]]$log2FoldChange,
+                      bpa = res.sat.bpa[[ncRNA]]$log2FoldChange)
+  }else{
+    dat <- data.frame(preT = res.vat[[ncRNA]]$log2FoldChange,
+                      bpa = res.vat.bpa[[ncRNA]]$log2FoldChange)
+  }
+  
+  labels <- list(lnc='lncRNA', mir='microRNA', sno='snoRNA', sn='snRNA')
+  
+  pval <- cor.test(dat$preT, dat$bpa, use="complete.obs", method='spearman')$p.value
+  pval <- ifelse(pval < 0.001, "p<0.001", paste0('p=',round(pval,3)))
+  
+  ggplot(dat, aes(x=preT, y=bpa)) +
+    geom_point() +
+    theme_classic() +
+    geom_hline(yintercept=0, linetype="dashed") + geom_vline(xintercept=0, linetype="dashed") +
+    xlab("Prenatal-T Effect Estimate") + ylab("BPA Effect \n Estimate") +
+    ggtitle(paste0(labels[[ncRNA]], '  r = ',round(cor(dat$preT, dat$bpa, use="complete.obs", method='spearman'),3), ", ", pval)) +
+    theme(plot.title = element_text(size=12),
+        axis.title = element_text(size=12),
+        axis.text = element_text(size=10))
+}
+
+sat_lnc <- plot_bpa_t_corr('lnc','SAT')
+sat_mir <- plot_bpa_t_corr('mir','SAT')
+sat_sno <- plot_bpa_t_corr('sno','SAT')
+sat_sn <- plot_bpa_t_corr('sn','SAT')
+
+vat_lnc <- plot_bpa_t_corr('lnc','VAT')
+vat_mir <- plot_bpa_t_corr('mir','VAT')
+vat_sno <- plot_bpa_t_corr('sno','VAT')
+vat_sn <- plot_bpa_t_corr('sn','VAT')
+
+fig7 <- grid.arrange(arrangeGrob(textGrob("SAT",gp=gp, hjust=0.5), 
+                                 textGrob("VAT",gp=gp, hjust=0.5),
+                                 nrow=1),
+             arrangeGrob(sat_lnc, vat_lnc, nrow=1),
+             arrangeGrob(sat_mir, vat_mir, nrow=1),
+             arrangeGrob(sat_sno, vat_sno, nrow=1),
+             arrangeGrob(sat_sn, vat_sn, nrow=1),
+             nrow=5,
+             # left = textGrob(bquote(~-Log[10]~adjusted~italic(P)),
+             #                 gp=gpar(fontsize=18, fontface=3), rot=90),
+             # bottom = textGrob(bquote(~Log[2]~fold~change),
+             #                 gp=gpar(fontsize=18, fontface=3)),
+             heights=c(1,2,2,2,2)
+             )
+
+ggsave(fig7, filename=file.path(path,"Figures/Fig7_bpa_t_corr.svg"), width=8, height=10)
+
+
+```
+
+
+# Correlation mRNA
+```{r, eval=F}
+#load(file.path(path,'Robj/combi.RDA'))
+
+load("K:/My Drive/Misc/RNAseq/Sheep_RNAseq/Fat_Depos/Data/count_data.RDA")
+deseq.ds <- DESeqDataSetFromMatrix(countData = counts,
+                                    colData = meta,
+                                    design = ~ treat)
+deseq.ds$sheep <- as.numeric(deseq.ds$sheep)
+
+load('K:/My Drive/Misc/RNAseq/Sheep_RNAseq/Adipose_BPA/combi_ram.ds.rda')
+
+#set up mRNA info
+mRNA <- DESeq(deseq.ds)
+mRNA.pd <- colData(mRNA)
+mRNA.pd$sheep <- as.numeric(mRNA.pd$sheep)
+mRNA.pd$name <- paste0(mRNA.pd$tissue, mRNA.pd$sheep)
+mRNA.counts <- counts(mRNA, normalized=T)
+colnames(mRNA.counts) <- mRNA.pd$name
+
+mRNA.bpa <- DESeq(combi.ds)
+mRNA.bpa.pd <- colData(mRNA.bpa)
+colnames(mRNA.bpa.pd)[5] <- "sheep"
+mRNA.bpa.pd$sheep <- mRNA.bpa.pd$sheep %>% as.character() %>% as.numeric()
+mRNA.bpa.pd$name <- paste0(mRNA.bpa.pd$tissue, mRNA.bpa.pd$sheep)
+mRNA.bpa.counts <- counts(mRNA.bpa, normalized=T)
+colnames(mRNA.bpa.counts) <- mRNA.bpa.pd$name
+
+
+load(file=file.path('K:/My Drive/Misc/RNAseq/Sheep_RNAseq/Fat_Depos/Data/res_shrink.RDA'))
+
+tab.bpa <- list(SAT=read.csv(file.path(path,'../Adipose_BPA/Results Files/DE genes BPA (subcutaneous).csv'),row.names=1),
+                VAT=read.csv(file.path(path,'../Adipose_BPA/Results Files/DE genes BPA (visceral).csv'),row.names=1))
+
+
+corRNA <- function(sRNA, sRNA.res, bpa=F){
+  
+  #check small RNA results to see if even worth doing this
+  sRNA.genes <- sRNA.res %>% as.data.frame() %>% dplyr::filter(padj<0.1) %>% rownames()
+  if(length(sRNA.genes)==0){
+    print("0 small RNA genes meet significance thresholds")
+    return(list(ddcor=NA, RNA.counts=NA))
+  }
+  
+  #set up small RNA data
+  sRNA.counts <- counts(sRNA, normalized=T)
+  
+  sRNA.pd <- colData(sRNA)
+  sRNA.pd$sheep <- as.numeric(sRNA.pd$sheep)
+  sRNA.pd$tissue <- ifelse(sRNA.pd$tissue=='C','CAT',
+                         ifelse(sRNA.pd$tissue=='R','RAT',
+                                ifelse(sRNA.pd$tissue=='S','SAT','VAT')))
+  sRNA.pd$name <- paste0(sRNA.pd$tissue, sRNA.pd$sheep)
+  
+  colnames(sRNA.counts) <- sRNA.pd$name
+  
+  #subset mRNA data to relevant samples
+  if(!bpa){
+    mRNA.pd2 <- mRNA.pd[match(sRNA.pd$name, mRNA.pd$name),]
+    mRNA.counts2 <- mRNA.counts[,mRNA.pd2$name]
+  }else{
+    mRNA.pd2 <- mRNA.bpa.pd[match(sRNA.pd$name, mRNA.bpa.pd$name),]
+    mRNA.counts2 <- mRNA.bpa.counts[,mRNA.pd2$name]
+  }
+  
+  #subset to signif genes
+  if(!bpa){
+    mRNA.res <- tab.treat[[sRNA.pd$tissue[1]]]
+  }else{
+    mRNA.res <- tab.bpa[[sRNA.pd$tissue[1]]]
+  }
+  mRNA.genes <- mRNA.res %>% as.data.frame() %>% dplyr::filter(padj<0.1 & abs(log2FoldChange)>1) %>% rownames()
+  
+  sRNA.mat <- sRNA.counts[sRNA.genes,,drop=F]
+  mRNA.mat <- mRNA.counts2[mRNA.genes,,drop=F]
+  
+  design.mat <- cbind(control=(sRNA.pd$treat=='C') + 0,
+                    treat=(sRNA.pd$treat!='C') + 0)
+  ddcor = ddcorAll(inputMat = sRNA.mat, inputMatB=mRNA.mat, design = design.mat,
+    compare = c("control", "treat"),
+    adjust = "fdr", nPerm = 0)
+
+  mRNA.mat <- mRNA.mat[!rownames(mRNA.mat) %in% rownames(sRNA.mat),,drop=F]
+  RNA.counts <- rbind(sRNA.mat, mRNA.mat)
+  
+  return(list(ddcor=ddcor, RNA.counts=RNA.counts, design.mat=design.mat))
+}
+
+types <- names(res.cat)
+names(types) <- names(res.cat)
+
+cor.cat <- lapply(types, FUN=function(x){
+  print(x)
+  corRNA(ds.cat[[x]], res.cat[[x]])
+})
+
+cor.rat <- lapply(types, FUN=function(x){
+  print(x)
+  corRNA(ds.rat[[x]], res.rat[[x]])
+})
+
+cor.sat <- lapply(types, FUN=function(x){
+  print(x)
+  corRNA(ds.sat[[x]], res.sat[[x]])
+})
+
+cor.vat <- lapply(types, FUN=function(x){
+  print(x)
+  corRNA(ds.vat[[x]], res.vat[[x]])
+})
+
+
+cor.sat.bpa <- lapply(types, FUN=function(x){
+  print(x)
+  corRNA(ds.sat.bpa[[x]], res.sat.bpa[[x]], bpa=T)
+})
+
+cor.vat.bpa <- lapply(types, FUN=function(x){
+  print(x)
+  corRNA(ds.vat.bpa[[x]], res.vat.bpa[[x]], bpa=T)
+})
+
+#cat t mir, rat t mir, vat t mir, vat t sno, vatbpa lnc, vatbpa sn
+
+cor.res <- list(catT=cor.cat,
+                ratT=cor.rat,
+                satT=cor.sat,
+                vatT=cor.vat,
+                satBPA=cor.sat.bpa,
+                vatBPA=cor.vat.bpa)
+save(cor.res, file=file.path(path,'Robj/cor.res.RDA'))
+```
+
+
+
+
+
+
+
+
+# ncRNA and mRNA corr {.tabset}
+```{r}
+load(file=file.path(path,'Robj/cor.res.RDA'))
+# plotCors(inputMat = RNA.counts.cat, design = design_cat,
+#   compare = c("control", "treat"), geneA = "LOC114118742", geneB = "FBXO11")
+
+cor.res2 <- list(NA, NA, NA, NA, NA, NA)
+names(cor.res2) <- c('cat_t_mir', 'rat_t_mir', 'vat_t_mir', 'vat_t_sno', 'vatbpa_lnc', 'vatbpa_sn')
+```
+
+```{r}
+library(facetscales)
+
+plotCors2 <- function (inputMat, design, compare, corrType = "pearson", 
+    geneA, geneB, oneRow = FALSE, smooth = TRUE, log = FALSE, 
+    ylab = NULL, xlab = NULL, lims=NA, colScheme) 
+{
+    if (!requireNamespace("ggplot2", quietly = TRUE)) {
+        stop("The R package ggplot2 is needed for this function to work. Please install it.", 
+            call. = FALSE)
+    }
+    SAF = getOption("stringsAsFactors")
+    on.exit(options(stringsAsFactors = SAF))
+    options(stringsAsFactors = FALSE)
+    if (!all(compare %in% colnames(design))) 
+        stop("Comparison group names must be column names in the design matrix.")
+    if (!geneA %in% rownames(inputMat)) 
+        stop("geneA was not found in the rownames of the input matrix.")
+    if (!geneB %in% rownames(inputMat)) 
+        stop("geneB was not found in the rownames of the input matrix.")
+    if (!corrType %in% c("pearson", "spearman")) 
+        stop("corrType should be one of \"pearson\" or \"spearman\".\n")
+    if (!mode(design) == "numeric") 
+        stop("Design matrix must be numeric.\n")
+    if (!all(design %in% c(0, 1))) 
+        stop("Design matrix must be made up of 0's and 1's.\n")
+    if (nrow(design) != ncol(inputMat)) 
+        stop("The number of rows in the design matrix must be equal to the number of columns in the input matrix.")
+    designRes = getGroupsFromDesign(inputMat, design)
+    groupList = designRes[[1]]
+    data_mat = matrix(ncol = 3)
+    for (i in 1:length(compare)) {
+        group = which(designRes[[2]] %in% compare[i])
+        tmp = groupList[[group]]
+        tmpGeneA = tmp[rownames(tmp) %in% geneA, ]
+        tmpGeneB = tmp[rownames(tmp) %in% geneB, ]
+        cond = rep(compare[i], ncol(tmp))
+        tmp_mat = data.frame(as.numeric(tmpGeneA), as.numeric(tmpGeneB), 
+            as.character(cond))
+        colnames(tmp_mat) = c("GeneA", "GeneB", "Condition")
+        if (i == 1) {
+            data_mat = tmp_mat
+        }
+        else {
+            data_mat = rbind(data_mat, tmp_mat)
+        }
+    }
+    data_mat$Condition = factor(data_mat$Condition, levels = unique(data_mat$Condition))
+    if (log) {
+        data_mat$GeneA = log(data_mat$GeneA + 0.5, 2)
+        data_mat$GeneB = log(data_mat$GeneB + 0.5, 2)
+    }
+    dc_plot = ggplot2::ggplot(data_mat, ggplot2::aes(x = GeneA, 
+        y = GeneB, color = Condition)) + ggplot2::geom_point() + 
+        ggplot2::theme_bw() + scale_color_manual(values=colScheme)
+    if (oneRow) {
+        dc_plot = dc_plot + facet_grid_sc(cols=vars(Condition), scales=lims)
+    }
+    else {
+        dc_plot = dc_plot + facet_grid_sc(cols=vars(Condition), scales=lims)
+    }
+    if (smooth) {
+        dc_plot = dc_plot + ggplot2::geom_smooth(method = "lm", 
+            formula = y ~ x)
+    }
+    if (!is.null(ylab)) {
+        dc_plot = dc_plot + ggplot2::ylab(ylab)
+    }
+    else {
+        dc_plot = dc_plot + ggplot2::ylab(paste0("Expression ", 
+            geneB))
+    }
+    if (!is.null(xlab)) {
+        dc_plot = dc_plot + ggplot2::xlab(xlab)
+    }
+    else {
+        dc_plot = dc_plot + ggplot2::xlab(paste0("Expression ", 
+            geneA))
+    }
+    return(dc_plot)
+}
+
+
+```
+
+## CAT T-treat mir
+```{r}
+cors <- cor.res$catT$mir
+table(cors$ddcor$Classes)
+cors$ddcor[cors$ddcor$Classes=='+/+',]
+cors$ddcor[cors$ddcor$Classes=='-/+',]
+
+cm1 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='MIR3959', geneB='HOXB6', colScheme=c("#FF8040","#0000FF")) +
+  theme_classic() + theme(legend.position = "none")
+
+cm2 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='MIR381', geneB='TNRC6C', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+
+cm3 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='MIR485', geneB='LMOD1', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+
+# cors$ddcor[cors$ddcor$Classes=='-/0',]
+# 
+# plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+#          compare=c('control','treat'), geneA='MIR433', geneB='CDK5RAP2')
+# plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+#          compare=c('control','treat'), geneA='MIR150', geneB='CDK5RAP2')
+# plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+#          compare=c('control','treat'), geneA='MIR3959', geneB='ZMAT1')
+# plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+#          compare=c('control','treat'), geneA='MIR485', geneB='HOXA6')
+
+cor.res2$cat_t_mir <- cors$ddcor[cors$ddcor$Classes %in% c('+/+','-/+'),]
+
+
+fig5 <- grid.arrange(cm1, cm2, cm3,
+             layout_matrix = rbind(c(1,1,2,2),
+                                   c(NA,3,3,NA))
+             # left = textGrob(bquote(~-Log[10]~adjusted~italic(P)),
+             #                 gp=gpar(fontsize=18, fontface=3), rot=90),
+             # bottom = textGrob(bquote(~Log[2]~fold~change),
+             )
+ggsave(fig5, filename=file.path(path,"Figures/Fig5_CAT_mir_corr.svg"), width=6, height=4)
+
+ggsave(cm1, filename=file.path(path,"Figures/CAT_mir_corr1.svg"), width=3.33, height=2)
+ggsave(cm2, filename=file.path(path,"Figures/CAT_mir_corr2.svg"), width=3.33, height=2)
+ggsave(cm3, filename=file.path(path,"Figures/CAT_mir_corr3.svg"), width=3.33, height=2)
+
+```
+
+## RAT T-treat mir
+```{r}
+cors <- cor.res$ratT$mir
+table(cors$ddcor$Classes)
+cors$ddcor
+
+plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+         compare=c('control','treat'), geneA='MIR133', geneB='RHOJ')+
+  theme_classic() + theme(legend.position = "none")
+
+cor.res2$rat_t_mir <- NA
+```
+
+## VAT T-treat mir
+```{r}
+cors <- cor.res$vatT$mir
+table(cors$ddcor$Classes)
+
+cors$ddcor[cors$ddcor$Classes=='-/-',]
+
+vm1 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims="free",
+         compare=c('control','treat'), geneA='MIR3955', geneB='ITGB2', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+
+
+
+# plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+#          compare=c('control','treat'), geneA='MIR3955', geneB='ITGB2', colScheme=c("#FF8040","#0000FF"))+
+#   theme_classic() + theme(legend.position = "none")
+# 
+# plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims="free",
+#          compare=c('control','treat'), geneA='MIR3955', geneB='ITGB2', colScheme=c("#FF8040","#0000FF"))+
+#   theme_classic() + theme(legend.position = "none")
+
+
+
+# cors$ddcor[cors$ddcor$Classes=='-/0',]
+# plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+#          compare=c('control','treat'), geneA='MIR3955', geneB='IFT140')
+# plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+#          compare=c('control','treat'), geneA='MIR3955', geneB='LRRC7')
+
+cor.res2$vat_t_mir <- cors$ddcor[cors$ddcor$Classes=='-/-',]
+
+ggsave(vm1, filename=file.path(path,"Figures/Fig6_VAT_T_mir_corr.svg"), width=4, height=2)
+
+```
+
+## VAT T-treat sno
+```{r}
+cors <- cor.res$vatT$sno
+table(cors$ddcor$Classes)
+
+cors$ddcor[cors$ddcor$Classes=='+/+',]
+cors$ddcor[cors$ddcor$Classes=='-/+',]
+
+
+vsno1 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='LOC114110216', geneB='LRRC7', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+vsno2 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='LOC114112592', geneB='LRRC7', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+vsno3 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='LOC114117654', geneB='LRRC7', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+
+
+vsno4 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='LOC114110211', geneB='TRDN', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+vsno5 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='LOC114114240', geneB='UGGT1', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+vsno6 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='LOC114114240', geneB='LMTK3', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+vsno7 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='LOC114114240', geneB='TRDN', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+vsno8 <- plotCors2(inputMat=cors$RNA.counts, design=cors$design.mat, lims= "free",
+         compare=c('control','treat'), geneA='LOC114110211', geneB='UGGT1', colScheme=c("#FF8040","#0000FF"))+
+  theme_classic() + theme(legend.position = "none")
+
+
+
+cor.res2$vat_t_sno <- cors$ddcor[cors$ddcor$Classes %in% c('+/+','-/+'),]
+
+fig7 <- grid.arrange(vsno1, vsno2, vsno3, vsno4, vsno5, vsno6, vsno7, vsno8,
+             layout_matrix = rbind(c(1,2,3),
+                                   c(4,5,6),
+                                   c(7,8,9))
+             )
+
+ggsave(fig7, filename=file.path(path,"Figures/Fig7_VAT_T_sno_corr.svg"), width=10, height=8)
+
+ggsave(vsno1, filename=file.path(path,"Figures/VAT_T_sno_corr1.svg"), width=3.33, height=2)
+ggsave(vsno2, filename=file.path(path,"Figures/VAT_T_sno_corr2.svg"), width=3.33, height=2)
+ggsave(vsno3, filename=file.path(path,"Figures/VAT_T_sno_corr3.svg"), width=3.33, height=2)
+ggsave(vsno4, filename=file.path(path,"Figures/VAT_T_sno_corr4.svg"), width=3.33, height=2)
+ggsave(vsno5, filename=file.path(path,"Figures/VAT_T_sno_corr5.svg"), width=3.33, height=2)
+ggsave(vsno6, filename=file.path(path,"Figures/VAT_T_sno_corr6.svg"), width=3.33, height=2)
+ggsave(vsno7, filename=file.path(path,"Figures/VAT_T_sno_corr7.svg"), width=3.33, height=2)
+ggsave(vsno8, filename=file.path(path,"Figures/VAT_T_sno_corr8.svg"), width=3.33, height=2)
+
+```
+
+## VAT BPA lnc
+```{r}
+cors <- cor.res$vatBPA$lnc
+table(cors$ddcor$Classes)
+
+cors$ddcor[cors$ddcor$Classes=='0/-',]
+
+plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+         compare=c('control','treat'), geneA='LOC105602517', geneB='LOC114113403')
+plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+         compare=c('control','treat'), geneA='LOC105602517', geneB='RECQL4')
+
+cor.res2$vatbpa_lnc <- NA
+
+```
+
+## VAT BPA sn
+```{r}
+cors <- cor.res$vatBPA$sn
+table(cors$ddcor$Classes)
+
+cors$ddcor[cors$ddcor$Classes=='-/0',]
+
+plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+         compare=c('control','treat'), geneA='LOC114117060', geneB='LOC114113403')
+plotCors(inputMat=cors$RNA.counts, design=cors$design.mat,
+         compare=c('control','treat'), geneA='LOC114117093', geneB='LOC114113403')
+
+#LOC114117060 - U1 spliceosomal RNA
+#LOC114117093 - U1 spliceosomal RNA
+#small nucleolar RNA SNORA61
+
+cor.res2$vatbpa_sn <- NA
+
+write.xlsx(cor.res2, file=file.path(path,'Tables/RNA_correlations.xlsx'))
+```
+
+
+
+## Compile important genes dataset
+```{r}
+library(readxl)    
+read_excel_allsheets <- function(filename, tibble = FALSE) {
+    # I prefer straight data.frames
+    # but if you like tidyverse tibbles (the default with read_excel)
+    # then just pass tibble = TRUE
+    sheets <- readxl::excel_sheets(filename)
+    x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X))
+    if(!tibble) x <- lapply(x, as.data.frame)
+    names(x) <- sheets
+    x
+}
+
+clean_vip <- function(vip_tab){
+  colnames(vip_tab) <- c("Gene", "VIP")
+  vip_tab$VIP <- as.numeric(vip_tab$VIP)
+  vip_tab
+}
+vip <- read.xlsx(file.path(path,'Tables/Adipocyte_NC_VIP.xlsx'))
+
+rat_t_mir_vip <- vip[-1,c(1,2)] %>% na.omit() %>% clean_vip()
+cat_t_mir_vip <- vip[-1,c(3,4)] %>% na.omit() %>% clean_vip()
+cat_t_sno_vip <- vip[-1,c(5,6)] %>% na.omit() %>% clean_vip()
+cat_t_sn_vip <- vip[-1,c(7,8)] %>% na.omit() %>% clean_vip()
+vat_t_mir_vip <- vip[-1,c(9,10)] %>% na.omit() %>% clean_vip()
+vat_t_sno_vip <- vip[-1,c(11,12)] %>% na.omit() %>% clean_vip()
+vat_bpa_mir_vip <- vip[-1,c(13,14)] %>% na.omit() %>% clean_vip()
+
+tab.cat <- read_excel_allsheets(file.path(path,"Tables/CAT_T_Treat_ncRNA_results.xlsx"))
+tab.rat <- read_excel_allsheets(file.path(path,"Tables/RAT_T_Treat_ncRNA_results.xlsx"))
+tab.sat <- read_excel_allsheets(file.path(path,"Tables/SAT_T_Treat_ncRNA_results.xlsx"))
+tab.vat <- read_excel_allsheets(file.path(path,"Tables/VAT_T_Treat_ncRNA_results.xlsx"))
+tab.sat.bpa <- read_excel_allsheets(file.path(path,"Tables/SAT_BPA_ncRNA_results.xlsx"))
+tab.vat.bpa <- read_excel_allsheets(file.path(path,"Tables/VAT_BPA_ncRNA_results.xlsx"))
+
+rat_t_mir <- merge(rat_t_mir_vip, tab.rat$mir[,c(1,4,7)], by='Gene', keep.x='T')
+cat_t_mir <- merge(cat_t_mir_vip, tab.cat$mir[,c(1,4,7)], by='Gene', keep.x='T')
+cat_t_sno <- merge(cat_t_sno_vip, tab.cat$sno[,c(1,4,7)], by='Gene', keep.x='T')
+cat_t_sn <- merge(cat_t_sn_vip, tab.cat$sn[,c(1,4,7)], by='Gene', keep.x='T')
+vat_t_mir <- merge(vat_t_mir_vip, tab.vat$mir[,c(1,4,7)], by='Gene', keep.x='T')
+vat_t_sno <- merge(vat_t_sno_vip, tab.vat$sno[,c(1,4,7)], by='Gene', keep.x='T')
+vat_bpa_mir <- merge(vat_bpa_mir_vip, tab.vat.bpa$mir[,c(1,4,7)], by='Gene', keep.x='T')
+
+vips <- list(CAT_preT_mir=cat_t_mir,
+             CAT_preT_sno=cat_t_sno,
+             CAT_preT_sn=cat_t_sn,
+             RAT_preT_mir=rat_t_mir,
+             VAT_preT_mir=vat_t_mir,
+             VAT_preT_sno=vat_t_sno,
+             VAT_bpa_mir=vat_bpa_mir)
+vips <- lapply(vips, FUN=function(x){
+  x <- x[order(x$VIP, decreasing=T),]
+  x <- x[1:20,]
+})
+
+write.xlsx(vips, file=file.path(path,"Tables/Top_VIP_score_ncRNA.xlsx"))
+```
+
+
+
+Dataset 
+```{r, eval=F}
+
+cat_t_tab <- lapply(ds.cat, counts, normalized=T)
+rat_t_tab <- lapply(ds.rat, counts, normalized=T)
+sat_t_tab <- lapply(ds.sat, counts, normalized=T)
+vat_t_tab <- lapply(ds.vat, counts, normalized=T)
+
+sat_bpa_tab <- lapply(ds.sat.bpa, counts, normalized=T)
+vat_bpa_tab <- lapply(ds.vat.bpa, counts, normalized=T)
+
+
+write.xlsx(cat_t_tab, file=file.path(path,"Tables/CountTables/CAT_PRE-T.xlsx"), rowNames=T)
+write.xlsx(rat_t_tab, file=file.path(path,"Tables/CountTables/RAT_PRE-T.xlsx"), rowNames=T)
+write.xlsx(sat_t_tab, file=file.path(path,"Tables/CountTables/SAT_PRE-T.xlsx"), rowNames=T)
+write.xlsx(vat_t_tab, file=file.path(path,"Tables/CountTables/VAT_PRE-T.xlsx"), rowNames=T)
+
+write.xlsx(sat_bpa_tab, file=file.path(path,"Tables/CountTables/SAT_BPA.xlsx"), rowNames=T)
+write.xlsx(vat_bpa_tab, file=file.path(path,"Tables/CountTables/VAT_BPA.xlsx"), rowNames=T)
+
+
+
+meta_t <- colData(combi.t.ds)
+meta_bpa <- colData(combi.bpa.ds)
+
+write.csv(meta_t, file=file.path(path,"Tables/CountTables/prenatal_T_metadata.csv"), row.names=F)
+write.csv(meta_bpa, file=file.path(path,"Tables/CountTables/bpa_metadata.csv"), row.names=F)
+
+```
+
+
+
+Dataset for Nadia
+```{r, eval=F}
+library(openxlsx)
+
+load("K:/My Drive/Misc/RNAseq/Sheep_RNAseq/Fat_Depos/Data/count_data.RDA")
+
+
+extra.vat <- meta[meta$tissue=='VAT' & meta$sheep==179, 'id']
+meta <- meta[meta$id!=extra.vat,]
+counts <- counts[,meta$id]
+
+deseq.ds <- DESeqDataSetFromMatrix(countData = counts,
+                                    colData = meta,
+                                    design = ~ treat)
+
+deseq.ds$sheep <- as.numeric(deseq.ds$sheep)
+deseq.ds$name <- paste0(deseq.ds$tissue, deseq.ds$sheep)
+
+deseq.ds <- DESeq(deseq.ds)
+mRNA.counts <- counts(deseq.ds, normalized=T)
+colnames(mRNA.counts) <- deseq.ds$name
+rownames(mRNA.counts) <- paste0(' ',rownames(mRNA.counts))
+
+saveRDS(deseq.ds, file="F:/Drive/Misc/RNAseq/Sheep_RNAseq/Dataset/preT_adipose_RNAseq.rds")
+write.csv(mRNA.counts, file="F:/Drive/Misc/RNAseq/Sheep_RNAseq/Dataset/preT_adipose_RNAseq.csv", quote=F)
+
+fix_ids <- function(seqobj){
+  seqobj$sheep <- as.numeric(seqobj$sheep)
+  seqobj$tissue <- ifelse(seqobj$tissue=='C','CAT',
+                         ifelse(seqobj$tissue=='R','RAT',
+                                ifelse(seqobj$tissue=='S','SAT','VAT')))
+  seqobj$name <- paste0(seqobj$tissue, seqobj$sheep)
+
+  seqobj
+}
+
+combi.fix <- function(type){
+  cat.f <- fix_ids(cat[[type]])
+  rat.f <- fix_ids(rat[[type]])
+  sat.f <- fix_ids(sat[[type]])
+  vat.f <- fix_ids(vat[[type]])
+  
+  counts <- cbind(counts(cat.f),counts(rat.f),counts(sat.f),counts(vat.f))
+  pd <- rbind(colData(cat.f),colData(rat.f),colData(sat.f),colData(vat.f))
+  
+  fat.ds <- DESeqDataSetFromMatrix(countData = counts,
+                                    colData = pd,
+                                    design = ~ treat)
+  fat.ds <- DESeq(fat.ds)
+  
+  ncRNA.counts <- counts(fat.ds, normalized=T)
+  colnames(ncRNA.counts) <- fat.ds$name
+  rownames(ncRNA.counts) <- paste0(' ',rownames(ncRNA.counts))
+  
+  ncRNA.counts
+}
+
+combine.fix <- lapply(names(cat), combi.fix)
+names(combine.fix) <- names(cat)
+
+write.xlsx(combine.fix, file="F:/Drive/Misc/RNAseq/Sheep_RNAseq/Dataset/preT_ncRNA.xlsx", row.names=T)
+
+
+meta <- colData(fat.ds)
+meta <- meta[,c(7,2,3,4,5)]
+write.csv(meta, file="F:/Drive/Misc/RNAseq/Sheep_RNAseq/Dataset/preT_metadata.csv", row.names=F, quote=F)
+```
